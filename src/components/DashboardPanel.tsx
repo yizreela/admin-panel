@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import LogoutButton from './LogoutButton';
 
 type DashboardData = {
   GroupId: string;
@@ -92,9 +91,6 @@ export default function DashboardPanel({ data }: DashboardPanelProps) {
               <div className="text-right">
                 <div className="text-sm text-gray-500">Total solicitudes</div>
                 <div className="text-2xl font-bold text-gray-900">{stats.totalSolicitudes}</div>
-                <div className="mt-2">
-                  <LogoutButton />
-                </div>
               </div>
             </div>
           </div>

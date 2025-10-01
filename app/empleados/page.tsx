@@ -1,7 +1,7 @@
 import Papa from "papaparse";
 import EmployeeManagement from "../../src/components/EmployeeManagement";
 import { Employee } from "../../src/components/EmployeeTable";
-import LogoutButton from "../../src/components/LogoutButton";
+import AuthenticatedNav from "../../src/components/AuthenticatedNav";
 
 async function fetchEmployees(): Promise<Employee[]> {
 	const baseUrl = process.env.EMPLOYEES_SHEET_CSV_URL || process.env.NEXT_PUBLIC_EMPLOYEES_SHEET_CSV_URL;
@@ -30,6 +30,7 @@ export default async function EmpleadosPage() {
 
 	return (
 		<div className="min-h-screen bg-gray-50">
+			<AuthenticatedNav />
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				<div className="space-y-8">
 					{!sheetConfigured && (
