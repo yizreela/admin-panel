@@ -14,18 +14,33 @@ type DashboardPanelProps = {
   data: DashboardData[];
 };
 
-export default function DashboardPanel({ data }: DashboardPanelProps) {
+export default function DashboardPanel({ data: initialData }: DashboardPanelProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSolicitante, setSelectedSolicitante] = useState('');
+  const [data, setData] = useState(initialData);
 
   // Webhook notifications para actualizaciones automáticas del sheet
   const { isConnected, lastNotification } = useWebhookNotifications();
 
+  // Función para refrescar datos
+  const refreshData = async () => {
+    try {
+      const response = await fetch('/api/dashboard');
+      const result = await response.json();
+      if (result.success) {
+        setData(result.data);
+        console.log('📊 Dashboard data refreshed');
+      }
+    } catch (error) {
+      console.error('Error refreshing dashboard data:', error);
+    }
+  };
+
   // Manejar notificaciones de webhook
   useEffect(() => {
     if (lastNotification) {
-      console.log('🔄 Dashboard sheet actualizado, recargando página...');
-      window.location.reload();
+      console.log('🔄 Dashboard sheet actualizado, refrescando datos...');
+      refreshData();
     }
   }, [lastNotification]);
 
