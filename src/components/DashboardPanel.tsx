@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useSheetPolling } from '../hooks/useSheetPolling';
 
 type DashboardData = {
   GroupId: string;
@@ -16,6 +17,19 @@ type DashboardPanelProps = {
 export default function DashboardPanel({ data }: DashboardPanelProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSolicitante, setSelectedSolicitante] = useState('');
+
+  // Polling para actualizaciones automáticas del sheet
+  const { isPolling, lastCheck } = useSheetPolling({
+    interval: 30000, // 30 segundos
+    enabled: true,
+    onUpdate: () => {
+      console.log('🔄 Dashboard sheet actualizado, recargando página...');
+      window.location.reload();
+    },
+    onError: (error) => {
+      console.error('❌ Error en polling del dashboard:', error);
+    }
+  });
 
   // Obtener solicitantes únicos para el filtro
   const uniqueSolicitantes = useMemo(() => {
@@ -91,6 +105,21 @@ export default function DashboardPanel({ data }: DashboardPanelProps) {
               <div className="text-right">
                 <div className="text-sm text-gray-500">Total solicitudes</div>
                 <div className="text-2xl font-bold text-gray-900">{stats.totalSolicitudes}</div>
+                
+                {/* Indicador de polling */}
+                <div className="mt-2 flex items-center justify-end gap-2 text-xs text-gray-500">
+                  {isPolling && (
+                    <div className="flex items-center gap-1">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span>Auto-actualizando</span>
+                    </div>
+                  )}
+                  {lastCheck && (
+                    <span className="text-gray-400">
+                      Última verificación: {new Date(lastCheck).toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>

@@ -8,6 +8,7 @@ import EmployeeFilters from "./EmployeeFilters";
 import EmployeeStats from "./EmployeeStats";
 import LogoutButton from "./LogoutButton";
 import { usePermissions } from "../hooks/usePermissions";
+import { useWebhookNotifications } from "../hooks/useWebhookNotifications";
 
 type Props = {
 	initialEmployees: Employee[];
@@ -21,6 +22,17 @@ export default function EmployeeManagement({ initialEmployees }: Props) {
 	const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const { permissions, userInfo } = usePermissions();
+
+	// Notificaciones webhook en tiempo real
+	const { isConnected, lastNotification } = useWebhookNotifications();
+	
+	// Refrescar empleados cuando se recibe notificación
+	useEffect(() => {
+		if (lastNotification) {
+			console.log('🔔 Notificación webhook recibida:', lastNotification);
+			refreshEmployees();
+		}
+	}, [lastNotification]);
 
 	// Update employees when initial data changes
 	useEffect(() => {
@@ -182,7 +194,26 @@ export default function EmployeeManagement({ initialEmployees }: Props) {
 							<p className="text-xs text-gray-600">Gestiona los empleados</p>
 						</div>
 					</div>
-					<LogoutButton />
+					
+					{/* Indicador de webhook */}
+					<div className="flex items-center gap-2 text-xs text-gray-500">
+						{isConnected ? (
+							<div className="flex items-center gap-1">
+								<div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+								<span>Conectado en tiempo real</span>
+							</div>
+						) : (
+							<div className="flex items-center gap-1">
+								<div className="w-2 h-2 bg-red-500 rounded-full"></div>
+								<span>Desconectado</span>
+							</div>
+						)}
+						{lastNotification && (
+							<span className="text-gray-400">
+								Última actualización: {new Date(lastNotification.timestamp).toLocaleTimeString()}
+							</span>
+						)}
+					</div>
 				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-4 gap-3">
