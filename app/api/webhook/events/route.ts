@@ -18,12 +18,12 @@ export async function GET(request: NextRequest) {
       })}\n\n`));
       
       console.log('🔗 Nueva conexión SSE establecida');
-    },
-    
-    cancel() {
-      // Remover conexión cuando se cierre
-      connections.delete(controller);
-      console.log('🔌 Conexión SSE cerrada');
+      
+      // Configurar cleanup cuando se cierre la conexión
+      request.signal.addEventListener('abort', () => {
+        connections.delete(controller);
+        console.log('🔌 Conexión SSE cerrada');
+      });
     }
   });
 
