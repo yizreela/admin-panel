@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getEmployees, getAllEmployees, addEmployee, updateEmployee, deleteEmployee } from '../../../lib/google-sheets';
+import { getEmployees, addEmployee, updateEmployee } from '../../../lib/google-sheets';
 
 // GET - Obtener empleados
 export async function GET() {
@@ -90,21 +90,21 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     
-    console.log(`🗑️ API DELETE: Recibida solicitud para eliminar empleado con ID: ${id}`);
+    console.log(`🗑️ API DELETE: Soft delete para empleado con Email/ID: ${id}`);
     
     if (!id) {
       console.log('❌ API DELETE: ID no proporcionado');
       return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
     }
     
-    // Eliminar empleado del Google Sheet
-    console.log(`🔄 API DELETE: Llamando a deleteEmployee(${id})`);
-    await deleteEmployee(id);
-    console.log(`✅ API DELETE: Empleado ${id} eliminado exitosamente`);
+    // Soft delete: actualizar Estado = 'Eliminado'
+    console.log(`🔄 API DELETE: Llamando a updateEmployee(${id}, { Estado: 'Eliminado' })`);
+    await updateEmployee(id, { Estado: 'Eliminado' });
+    console.log(`✅ API DELETE: Empleado ${id} marcado como Eliminado exitosamente`);
     
     return NextResponse.json({ 
       success: true, 
-      message: 'Empleado eliminado correctamente' 
+      message: 'Empleado marcado como Eliminado correctamente' 
     });
     
   } catch (error) {

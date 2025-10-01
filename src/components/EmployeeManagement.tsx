@@ -90,8 +90,9 @@ export default function EmployeeManagement({ initialEmployees }: Props) {
 
 		setIsLoading(true);
 		try {
-			const response = await fetch(`/api/employees?id=${id}`, {
-				method: 'DELETE',
+			// Usar el nuevo endpoint de soft delete con PUT
+			const response = await fetch(`/api/employees/delete?id=${id}`, {
+				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
 				}
@@ -104,7 +105,7 @@ export default function EmployeeManagement({ initialEmployees }: Props) {
 			
 			// Refresh data from server
 			await refreshEmployees();
-			alert("Empleado eliminado correctamente");
+			alert("Empleado marcado como eliminado correctamente");
 		} catch (error) {
 			console.error('Error deleting employee:', error);
 			alert(`Error al eliminar empleado: ${error instanceof Error ? error.message : 'Error desconocido'}`);
