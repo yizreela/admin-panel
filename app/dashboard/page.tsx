@@ -39,8 +39,6 @@ function normalizeData(rows: Row[]) {
 }
 
 export default async function DashboardPage() {
-  const rows = await fetchCsv();
-  const normalizedData = normalizeData(rows);
   const sheetConfigured = Boolean(process.env.DASHBOARD_SHEET_CSV_URL || process.env.NEXT_PUBLIC_DASHBOARD_SHEET_CSV_URL);
 
   if (!sheetConfigured) {
@@ -64,10 +62,21 @@ export default async function DashboardPage() {
     );
   }
 
+  // Obtener datos iniciales del API
+  const response = await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/api/dashboard`, {
+    cache: 'no-store'
+  });
+  
+  let initialData = [];
+  if (response.ok) {
+    const result = await response.json();
+    initialData = result.data || [];
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <AuthenticatedNav />
-      <DashboardPanel data={normalizedData} />
+      <DashboardPanel data={initialData} />
     </div>
   );
 }
