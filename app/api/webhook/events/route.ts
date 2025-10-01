@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       // Agregar esta conexión al store
       connections.add(controller);
       
-      // Enviar mensaje de conexión
+      // Enviar mensaje de conexión inicial
       controller.enqueue(encoder.encode(`data: ${JSON.stringify({
         type: 'connected',
         timestamp: new Date().toISOString()
@@ -24,6 +24,24 @@ export async function GET(request: NextRequest) {
         connections.delete(controller);
         console.log('🔌 Conexión SSE cerrada');
       });
+      
+      // Enviar heartbeat cada 30 segundos para mantener la conexión
+      const heartbeat = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: 'heartbeat',
+            timestamp: new Date().toISOString()
+          })}\n\n`));
+        } catch (error) {
+          clearInterval(heartbeat);
+          connections.delete(controller);
+        }
+      }, 30000);
+      
+      // Limpiar heartbeat cuando se cierre la conexión
+      request.signal.addEventListener('abort', () => {
+        clearInterval(heartbeat);
+      });
     }
   });
 
@@ -33,7 +51,8 @@ export async function GET(request: NextRequest) {
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive',
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Cache-Control'
+      'Access-Control-Allow-Headers': 'Cache-Control',
+      'X-Accel-Buffering': 'no'
     }
   });
 }
