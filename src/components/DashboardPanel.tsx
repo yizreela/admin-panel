@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useSheetPolling } from '../hooks/useSheetPolling';
+import { useState, useMemo, useEffect } from 'react';
+import { useWebhookNotifications } from '../hooks/useWebhookNotifications';
 
 type DashboardData = {
   GroupId: string;
@@ -18,18 +18,16 @@ export default function DashboardPanel({ data }: DashboardPanelProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSolicitante, setSelectedSolicitante] = useState('');
 
-  // Polling para actualizaciones automáticas del sheet
-  const { isPolling, lastCheck } = useSheetPolling({
-    interval: 30000, // 30 segundos
-    enabled: true,
-    onUpdate: () => {
+  // Webhook notifications para actualizaciones automáticas del sheet
+  const { isConnected, lastNotification } = useWebhookNotifications();
+
+  // Manejar notificaciones de webhook
+  useEffect(() => {
+    if (lastNotification) {
       console.log('🔄 Dashboard sheet actualizado, recargando página...');
       window.location.reload();
-    },
-    onError: (error) => {
-      console.error('❌ Error en polling del dashboard:', error);
     }
-  });
+  }, [lastNotification]);
 
   // Obtener solicitantes únicos para el filtro
   const uniqueSolicitantes = useMemo(() => {
@@ -106,17 +104,17 @@ export default function DashboardPanel({ data }: DashboardPanelProps) {
                 <div className="text-sm text-gray-500">Total solicitudes</div>
                 <div className="text-2xl font-bold text-gray-900">{stats.totalSolicitudes}</div>
                 
-                {/* Indicador de polling */}
+                {/* Indicador de webhook */}
                 <div className="mt-2 flex items-center justify-end gap-2 text-xs text-gray-500">
-                  {isPolling && (
+                  {isConnected && (
                     <div className="flex items-center gap-1">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span>Auto-actualizando</span>
+                      <span>Conectado en tiempo real</span>
                     </div>
                   )}
-                  {lastCheck && (
+                  {lastNotification && (
                     <span className="text-gray-400">
-                      Última verificación: {new Date(lastCheck).toLocaleTimeString()}
+                      Última actualización: {new Date(lastNotification.timestamp).toLocaleTimeString()}
                     </span>
                   )}
                 </div>
