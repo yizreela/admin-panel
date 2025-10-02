@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
         console.log('🔌 Conexión SSE cerrada');
       });
       
-      // Enviar heartbeat cada 30 segundos para mantener la conexión
+      // Enviar heartbeat cada 60 segundos para mantener la conexión
       const heartbeat = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
           clearInterval(heartbeat);
           connections.delete(controller);
         }
-      }, 30000);
+      }, 60000);
       
       // Limpiar heartbeat cuando se cierre la conexión
       request.signal.addEventListener('abort', () => {
