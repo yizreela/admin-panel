@@ -8,40 +8,47 @@ export async function GET(request: NextRequest) {
   
   const stream = new ReadableStream({
     start(controller) {
-      // Agregar esta conexión al store
-      connections.add(controller);
-      
-      // Enviar mensaje de conexión inicial
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-        type: 'connected',
-        timestamp: new Date().toISOString()
-      })}\n\n`));
-      
-      console.log('🔗 Nueva conexión SSE establecida');
-      
-      // Configurar cleanup cuando se cierre la conexión
-      request.signal.addEventListener('abort', () => {
-        connections.delete(controller);
-        console.log('🔌 Conexión SSE cerrada');
-      });
-      
-      // Enviar heartbeat cada 300 segundos (5 minutos) para mantener la conexión
-      const heartbeat = setInterval(() => {
-        try {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-            type: 'heartbeat',
-            timestamp: new Date().toISOString()
-          })}\n\n`));
-        } catch (error) {
+      try {
+        // Agregar esta conexión al store
+        connections.add(controller);
+        
+        // Enviar mensaje de conexión inicial
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+          type: 'connected',
+          timestamp: new Date().toISOString()
+        })}\n\n`));
+        
+        console.log('🔗 Nueva conexión SSE establecida');
+        
+        // Enviar heartbeat cada 300 segundos (5 minutos) para mantener la conexión
+        const heartbeat = setInterval(() => {
+          try {
+            if (connections.has(controller)) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'heartbeat',
+                timestamp: new Date().toISOString()
+              })}\n\n`));
+            } else {
+              clearInterval(heartbeat);
+            }
+          } catch (error) {
+            console.log('❌ Error en heartbeat, cerrando conexión');
+            clearInterval(heartbeat);
+            connections.delete(controller);
+          }
+        }, 300000);
+        
+        // Configurar cleanup cuando se cierre la conexión
+        request.signal.addEventListener('abort', () => {
           clearInterval(heartbeat);
           connections.delete(controller);
-        }
-      }, 300000);
-      
-      // Limpiar heartbeat cuando se cierre la conexión
-      request.signal.addEventListener('abort', () => {
-        clearInterval(heartbeat);
-      });
+          console.log('🔌 Conexión SSE cerrada');
+        });
+        
+      } catch (error) {
+        console.error('❌ Error estableciendo conexión SSE:', error);
+        connections.delete(controller);
+      }
     }
   });
 
