@@ -1,32 +1,20 @@
-import Papa from "papaparse";
 import EmployeeManagement from "../../src/components/EmployeeManagement";
 import { Employee } from "../../src/components/EmployeeTable";
 import AuthenticatedNav from "../../src/components/AuthenticatedNav";
 
-async function fetchEmployees(): Promise<Employee[]> {
-	const baseUrl = process.env.EMPLOYEES_SHEET_CSV_URL || process.env.NEXT_PUBLIC_EMPLOYEES_SHEET_CSV_URL;
-	if (!baseUrl) return [];
-	
-	const url = new URL(baseUrl);
-	url.searchParams.set("cb", Date.now().toString());
-	const res = await fetch(url.toString(), { cache: "no-store" });
-	if (!res.ok) return [];
-	
-	const text = await res.text();
-	const parsed = Papa.parse<Employee>(text, { header: true, skipEmptyLines: true });
-	
-	return (parsed.data || [])
-		.filter(Boolean)
-		.filter(emp => emp.Estado !== 'Eliminado') // Filter out deleted employees
-		.map((emp, index) => ({
-			...emp,
-			id: emp.Email || `emp-${index}`,
-		}));
-}
-
 export default async function EmpleadosPage() {
-	const employees = await fetchEmployees();
 	const sheetConfigured = Boolean(process.env.EMPLOYEES_SHEET_CSV_URL || process.env.NEXT_PUBLIC_EMPLOYEES_SHEET_CSV_URL);
+
+	// Obtener datos iniciales del API
+	const response = await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/api/employees`, {
+		cache: 'no-store'
+	});
+	
+	let initialEmployees: Employee[] = [];
+	if (response.ok) {
+		const result = await response.json();
+		initialEmployees = result.data || [];
+	}
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -48,7 +36,7 @@ export default async function EmpleadosPage() {
 					)}
 
 					{/* Employee Management - TABLA PRIMERO */}
-					<EmployeeManagement initialEmployees={employees} />
+					<EmployeeManagement initialEmployees={initialEmployees} />
 				</div>
 			</div>
 		</div>
